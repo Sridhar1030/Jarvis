@@ -1,16 +1,21 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader; // Add this line
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.awt.AWTException;
+import java.awt.KeyEventDispatcher;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
 import java.io.FileWriter;
+import java.awt.Desktop;
+
 class BrightnessControl {
     // Brightness adjust function
     public void inc(Scanner scanner) {
@@ -42,6 +47,7 @@ public class Jarvis {
     private static Scanner scanner = new Scanner(System.in);
     private static JarvisGUI gui; // Reference to the GUI
     private static long lastActivityTime;
+    private static int loginAttempts = 0;
      // Include the FileUtils class here
      private static class FileUtils {
         public static void writeToFile(String filePath, String content) {
@@ -52,29 +58,6 @@ public class Jarvis {
             }
         }
     }
-
-
-    private void clickPhoto() {
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", "start microsoft.windows.camera:");
-            Process process = processBuilder.start();
-
-            // Wait for the camera app to open
-            TimeUnit.SECONDS.sleep(5);
-
-            // Simulate pressing the Enter key
-            Robot robot = new Robot();
-            robot.keyPress(KeyEvent.VK_ENTER);
-            robot.keyRelease(KeyEvent.VK_ENTER);
-
-            process.destroy();
-
-            System.out.println("Photo taken!");
-        } catch (IOException | InterruptedException | AWTException e) {
-            e.printStackTrace();
-        }
-    }
-
     // Commands calling here
     public static String processCommand(String command) {
         String response = "";
@@ -128,6 +111,16 @@ public class Jarvis {
             response = "Please enter your note. Type 'exit' on a new line to finish.";
             takeNotes();
         }
+        else if (command.contains("whatsaap")) {
+            String[] parts = command.split(" ", 2);
+            if (parts.length > 1) {
+                String name = parts[1].trim();
+                whatsaap(name);
+                response = "Opening WhatsApp for " + name;
+            } else {
+                response = "Please provide a name to open WhatsApp.";
+            }
+        }
         else if (command.contains("lock")) {
             response = "Please enter the password to lock the computer:";
             System.out.println(response);
@@ -148,6 +141,7 @@ public class Jarvis {
             System.out.println("Goodbye!");
             System.exit(0);
         } 
+
          else {
             response = "I'm sorry, I don't understand that command.";
         }
@@ -158,19 +152,74 @@ public class Jarvis {
         return response;
     }
 
+
     // Function declarations here
+    public static void whatsaap(String name) {
+        try {
+            String searchUrl = "https://web.whatsapp.com";
+            URI uri = new URI(searchUrl);
+            Desktop.getDesktop().browse(uri);
+            Robot robot = new Robot();
+            // Prompt the user for the message to send
+            robot.delay(10000);
+            typeText(robot, name);
+        } catch (IOException | URISyntaxException | AWTException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void typeText(Robot robot, String name) {
+        robot.mouseMove(192, 179);
+        robot.delay(5000);
+        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+        robot.delay(5000);
+
+        for (char c : name.toCharArray()) {
+            int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
+            if (KeyEvent.CHAR_UNDEFINED == keyCode) {
+                throw new IllegalArgumentException("Cannot type character: " + c);
+            }
+            robot.keyPress(keyCode);
+            robot.keyRelease(keyCode);
+            robot.delay(100);
+        }
+        robot.keyPress(KeyEvent.VK_ENTER);
+        robot.keyRelease(KeyEvent.VK_ENTER);
+
+    }
+
+    
+
+       private void clickPhoto() {
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", "start microsoft.windows.camera:");
+            Process process = processBuilder.start();
+
+            // Wait for the camera app to open
+            TimeUnit.SECONDS.sleep(5);
+
+            // Simulate pressing the Enter key
+            Robot robot = new Robot();
+            robot.keyPress(KeyEvent.VK_ENTER);
+            robot.keyRelease(KeyEvent.VK_ENTER);
+
+            process.destroy();
+
+            System.out.println("Photo taken!");
+        } catch (IOException | InterruptedException | AWTException e) {
+            e.printStackTrace();
+        }
+    }
     private void displaySystemProperties() {
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", "systeminfo");
-            Process process = processBuilder.start();
+            System.out.println("Opening System Properties...");
     
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            System.out.println("System Properties:");
+            // Execute a command to open the system properties window
+            String command = "control.exe sysdm.cpl,,3";
+            Process process = Runtime.getRuntime().exec(command);
     
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-            }
+            System.out.println("System Properties opened.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -320,17 +369,43 @@ public class Jarvis {
         Thread inactivityThread = new Thread(() -> inactivityTimer());
         inactivityThread.start();
 
-        try {
+        // Ask for a password
+        boolean authenticated = askForPassword();
+        
+        if (authenticated) {
+            // Password is correct, continue with the program
+            System.out.println("Access granted. You can now use Jarvis.");
+            
             while (true) {
                 System.out.print("Enter a command: ");
-                String userInput = br.readLine();
-                lastActivityTime = System.currentTimeMillis(); // Update last activity time
-                String response = processCommand(userInput);
-                System.out.println("Response: " + response);
+                String userInput;
+                try {
+                    userInput = br.readLine();
+                    lastActivityTime = System.currentTimeMillis(); // Update last activity time
+                    String response = processCommand(userInput);
+                    System.out.println("Response: " + response);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } else {
+            // Password is incorrect after three attempts
+            System.out.println("Access denied. Exiting Jarvis.");
+            System.exit(0);
         }
+    }
+    private static boolean askForPassword() {
+        while (loginAttempts < 3) {
+            System.out.print("Enter the password to start Jarvis: ");
+            String password = scanner.nextLine();
+            if (isPasswordCorrect(password)) {
+                return true;
+            } else {
+                loginAttempts++;
+                System.out.println("Incorrect password. Attempts remaining: " + (3 - loginAttempts));
+            }
+        }
+        return false;
     }
 
     // Inactivity timer
