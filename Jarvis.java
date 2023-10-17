@@ -43,7 +43,8 @@ class BrightnessControl {
 }
 
 public class Jarvis {
-    private static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    private static BufferedReader br = new BufferedReader(new InputStreamReader(System.in)); 
+    // BufferedReader is a class which simplifies reading text from a character input stream
     private static Scanner scanner = new Scanner(System.in);
     private static JarvisGUI gui; // Reference to the GUI
     private static long lastActivityTime;
@@ -51,7 +52,7 @@ public class Jarvis {
      // Include the FileUtils class here
      private static class FileUtils {
         public static void writeToFile(String filePath, String content) {
-            try (FileWriter writer = new FileWriter(filePath, true)) {
+            try (FileWriter writer = new FileWriter(filePath, true)) {//agar yaha false hua toh overwrite karega phele ke contents ko 
                 writer.write(content);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -64,45 +65,50 @@ public class Jarvis {
 
         if (command.contains("hello") || command.contains("hey") || command.contains("hi") || command.contains("hola")) {
             response = "Hello, how can I assist you?";
-        } else if (command.contains("time")) {
+        } 
+        else if (command.contains("time")) {
             DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
             Date date = new Date();
             response = "The current time is " + dateFormat.format(date);
-        } else if (command.contains("photo")) {
+        } 
+        else if (command.contains("photo")) {
             Jarvis jarvisInstance = new Jarvis();
             jarvisInstance.clickPhoto();
             response = "Taking a photo for you.";
-        } else if (command.contains("brightness")) {
+        } 
+        else if (command.contains("brightness")) {
             try {
                 BrightnessControl obj = new BrightnessControl();
                 obj.inc(scanner); // Pass the scanner to the BrightnessControl function
             } catch (Exception e) {
                 response = "An error occurred while adjusting brightness.";
             }
-        } else if (command.contains("write")) {
-            response = "What would you like to write?";
-        } else if (command.contains("hi") || command.contains("hello") || command.contains("hey")) {
-            response = "Hello, how are you?";
-        } else if (command.contains("search")) {
+        }
+        else if (command.contains("search")) {
             String searchQuery = command.replace("search", "").trim();
             response = "Searching for: " + searchQuery;
 
             search(searchQuery);
-        } else if (command.contains("play") || command.contains("watch") || command.contains("watching")) {
+        }
+        else if (command.contains("play") || command.contains("watch") || command.contains("watching")) {
             response = "Playing...";
             String searchQuery = command.replace("play", "").replace("watch", "").replace("watching", "").trim();
 
             Ytsearch(searchQuery);
-        } else if (command.contains("songs")) {
+        } 
+        else if (command.contains("songs")) {
             response = "Playing songs...";
-        } else if (command.contains("exit") || command.contains("bye") || command.contains("shutdown")) {
+        }
+        else if (command.contains("exit") || command.contains("bye") || command.contains("shutdown")) {
             System.out.println("Goodbye!");
             System.exit(0);
-        } else if (command.contains("system properties")) {
+        }
+        else if (command.contains("system")) {
             Jarvis jarvisInstance = new Jarvis();
             jarvisInstance.displaySystemProperties();
            response = "Displaying system properties.";
-        } else if (command.contains("file")) {
+        }
+        else if (command.contains("file")) {
             String fileName = command.replace("file", "").trim();
             response = "Searching for file: " + fileName;
             searchFileInExplorer(fileName);
@@ -111,7 +117,7 @@ public class Jarvis {
             response = "Please enter your note. Type 'exit' on a new line to finish.";
             takeNotes();
         }
-        else if (command.contains("whatsaap")) {
+        else if (command.contains("whatsaap")||command.contains("message")) {
             String[] parts = command.split(" ", 2);
             if (parts.length > 1) {
                 String name = parts[1].trim();
@@ -137,30 +143,24 @@ public class Jarvis {
                 response = "Incorrect password. Computer not locked.";
             }
         }
-        else if (command.contains("exit") || command.contains("bye") || command.contains("shutdown")) {
-            System.out.println("Goodbye!");
-            System.exit(0);
-        } 
-
          else {
             response = "I'm sorry, I don't understand that command.";
         }
 
-        // Update the last activity time
+      //update activity time
         lastActivityTime = System.currentTimeMillis();
 
         return response;
     }
 
-
+//********************************************************************************************************************************************************************** */
     // Function declarations here
     public static void whatsaap(String name) {
         try {
             String searchUrl = "https://web.whatsapp.com";
             URI uri = new URI(searchUrl);
-            Desktop.getDesktop().browse(uri);
+            Desktop.getDesktop().browse(uri);//opens the default browser
             Robot robot = new Robot();
-            // Prompt the user for the message to send
             robot.delay(10000);
             typeText(robot, name);
         } catch (IOException | URISyntaxException | AWTException e) {
@@ -170,10 +170,10 @@ public class Jarvis {
 
     public static void typeText(Robot robot, String name) {
         robot.mouseMove(192, 179);
-        robot.delay(5000);
+        robot.delay(1000);
         robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-        robot.delay(5000);
+        robot.delay(1000);
 
         for (char c : name.toCharArray()) {
             int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
@@ -203,7 +203,7 @@ public class Jarvis {
             Robot robot = new Robot();
             robot.keyPress(KeyEvent.VK_ENTER);
             robot.keyRelease(KeyEvent.VK_ENTER);
-
+            
             process.destroy();
 
             System.out.println("Photo taken!");
@@ -445,3 +445,4 @@ public class Jarvis {
         Jarvis.gui = gui;
     }
 }
+//excel
