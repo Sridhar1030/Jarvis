@@ -4,11 +4,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.Font;
 
 public class JarvisGUI extends JFrame {
     private JTextArea textArea;
     private JPasswordField passwordField;
+    private boolean isUserThere = true;
 
     public JarvisGUI() {
         // Create a login dialog
@@ -59,6 +59,7 @@ public class JarvisGUI extends JFrame {
         submitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                isUserThere = true; // User responded, reset inactivity timer
                 submitCommand(commandField);
             }
         });
@@ -80,12 +81,17 @@ public class JarvisGUI extends JFrame {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    isUserThere = true; // User responded, reset inactivity timer
                     submitCommand(commandField);
                 }
             }
         });
 
         Jarvis.setGUIReference(this);
+
+        // Start the inactivity timer in a separate thread
+        Thread inactivityThread = new Thread(() -> inactivityTimer());
+        inactivityThread.start();
     }
 
     public void appendText(String text) {
@@ -104,6 +110,53 @@ public class JarvisGUI extends JFrame {
 
         commandField.setText("");
     }
+
+       
+    private void inactivityTimer() {
+        long inactivityThreshold = 6000; // 1 minute (in milliseconds)
+        long shutdownDelay = 15000; // 15 seconds (in milliseconds)
+    
+        while (true) {
+            long currentTime = System.currentTimeMillis();
+            long timeSinceLastActivity = currentTime - lastActivityTime;
+    
+            if (timeSinceLastActivity >= inactivityThreshold) {
+                // Check if the user is there
+                if (isUserThere) {
+                    isUserThere = false; // Reset the flag
+                } else {
+                    // This part will shut down the program if no response within 15 seconds
+                    long shutdownTime = System.currentTimeMillis() + shutdownDelay;
+                    while (System.currentTimeMillis() < shutdownTime) {
+                        int response = JOptionPane.showConfirmDialog(this, "Are you there?", "Inactivity Alert", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (response == JOptionPane.YES_OPTION) {
+                            isUserThere = true;
+                            lastActivityTime = System.currentTimeMillis(); // Reset the timer
+                            break;
+                        }
+                        try {
+                            Thread.sleep(1000); // Check every 1 second
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+    
+                    if (!isUserThere) {
+                        System.exit(0); // Shut down the program if no response within 15 seconds
+                    }
+                }
+            }
+    
+            try {
+                Thread.sleep(1000); // Check every 1 seconds
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    
+    private long lastActivityTime = System.currentTimeMillis();
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
