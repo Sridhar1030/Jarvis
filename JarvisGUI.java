@@ -113,7 +113,7 @@ public class JarvisGUI extends JFrame {
 
        
     private void inactivityTimer() {
-        long inactivityThreshold = 6000; // 1 minute (in milliseconds)
+        long inactivityThreshold = 1000; // 1 minute (in milliseconds)
         long shutdownDelay = 15000; // 15 seconds (in milliseconds)
     
         while (true) {
@@ -134,6 +134,10 @@ public class JarvisGUI extends JFrame {
                             lastActivityTime = System.currentTimeMillis(); // Reset the timer
                             break;
                         }
+                        if (response==JOptionPane.NO_OPTION)
+                        {
+                            System.exit(0);
+                        }
                         try {
                             Thread.sleep(1000); // Check every 1 second
                         } catch (InterruptedException e) {
@@ -148,7 +152,7 @@ public class JarvisGUI extends JFrame {
             }
     
             try {
-                Thread.sleep(1000); // Check every 1 seconds
+                Thread.sleep(5000); // Check every 5 seconds
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
